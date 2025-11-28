@@ -15,7 +15,14 @@ function SkillPrimitive({ position, label, techs, delay = 0, isDatabase }) {
   // Adjust shape and popup for mobile
   const shapeY = isMobile ? -2 : 0;
   const popupY = isMobile ? 6 : 7;
-  const popupX = isMobile && isDatabase ? -6 : 0; // move database popup more left
+
+  // Shift popup on mobile
+  let popupX = 0;
+  if (isMobile) {
+    if (isDatabase) popupX = -6; // Databases & Tools shifted left
+    else if (label === 'Programming Languages') popupX = 3; // shift right
+    else if (label === 'Frameworks') popupX = 1.5; // shift slightly right
+  }
 
   useFrame(() => {
     if (!ref.current) return;
@@ -143,16 +150,16 @@ export default function SkillsScene() {
     },
   ];
 
-  const gap = 10;
+  const gap = 14; // increase gap so all shapes + popups fit
   const positions = items.map((_, i) => [
     i * gap - ((items.length - 1) * gap) / 2,
     0,
     0,
   ]);
 
-  const canvasHeight = window.innerWidth < 768 ? '100vh' : '60vh';
-  const cameraPosition = window.innerWidth < 768 ? [0, 0, 45] : [0, 0, 30];
-  const cameraFov = window.innerWidth < 768 ? 55 : 40;
+  const canvasHeight = window.innerWidth < 768 ? '120vh' : '60vh'; // increase height to show everything
+  const cameraPosition = window.innerWidth < 768 ? [0, 0, 50] : [0, 0, 30]; // move camera back for mobile
+  const cameraFov = window.innerWidth < 768 ? 60 : 40;
 
   return (
     <Canvas
