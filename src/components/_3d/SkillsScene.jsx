@@ -2,40 +2,27 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Text, Html } from '@react-three/drei';
 import { useMemo, useRef, useState, useEffect } from 'react';
 
-function SkillPrimitive({ position, label, techs, delay = 0, isDatabase }) {
+function SkillPrimitive({ position, label, techs, delay = 0, isDatabase, globalClickRef }) {
   const ref = useRef();
   const [hovered, setHovered] = useState(false);
   const badges = useMemo(() => techs, [techs]);
 
   // Mobile tap toggle
-  const handleTap = () => {
+  const handleTap = (e) => {
+    e.stopPropagation(); // stop click from reaching global overlay
     if (window.innerWidth < 1024) {
-      setHovered(true); // always open on tap
+      setHovered(true); // open popup
     }
   };
 
-  // Close popup when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (window.innerWidth >= 1024) return; // only mobile
-      if (!ref.current) return;
-      // Close popup if click is outside mesh
-      if (!ref.current.parent?.parent?.contains(e.target)) {
-        setHovered(false);
-      }
-    };
-    window.addEventListener('click', handleClickOutside);
-    return () => window.removeEventListener('click', handleClickOutside);
-  }, []);
-
   // Adjust shape and popup for mobile
   const shapeY = window.innerWidth < 768 ? -2 : 0;
-  let popupY = window.innerWidth < 768 ? 6 : 7;
-  let popupX = 0;
+  const popupY = window.innerWidth < 768 ? 6 : 7;
 
-  // Move database popup slightly left on mobile
+  // Shift database popup more left
+  let popupX = 0;
   if (window.innerWidth < 768 && isDatabase) {
-    popupX = -3; // shift left
+    popupX = -6; // more left
   }
 
   useFrame(() => {
@@ -46,6 +33,20 @@ function SkillPrimitive({ position, label, techs, delay = 0, isDatabase }) {
       ref.current.scale.x + (targetScale - ref.current.scale.x) * 0.1;
     ref.current.scale.set(currentScale, currentScale, currentScale);
   });
+
+  // Close popup on any global click
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      if (window.innerWidth < 1024) {
+        setHovered(false);
+      }
+    };
+    const overlay = globalClickRef.current;
+    if (overlay) overlay.addEventListener('click', handleGlobalClick);
+    return () => {
+      if (overlay) overlay.removeEventListener('click', handleGlobalClick);
+    };
+  }, [globalClickRef]);
 
   return (
     <group position={[position[0], position[1] + shapeY, position[2]]}>
@@ -152,6 +153,8 @@ function SkillPrimitive({ position, label, techs, delay = 0, isDatabase }) {
 }
 
 export default function SkillsScene() {
+  const globalClickRef = useRef();
+
   const items = [
     {
       label: 'Programming Languages',
@@ -166,7 +169,7 @@ export default function SkillsScene() {
     {
       label: 'Databases & Tools',
       techs: ['MySQL', 'PostgreSQL', 'Kaggle', 'GitHub', 'Docker', 'Postman', 'VS Code', 'Figma', 'Jira'],
-      isDatabase: true, // special shift on mobile
+      isDatabase: true,
     },
   ];
 
@@ -182,24 +185,27 @@ export default function SkillsScene() {
   const cameraFov = window.innerWidth < 768 ? 55 : 40;
 
   return (
-    <Canvas
-      camera={{ position: cameraPosition, fov: cameraFov }}
-      style={{ width: '100vw', height: canvasHeight }}
-      dpr={[1, 2]}
-    >
-      <ambientLight intensity={0.7} />
-      <directionalLight position={[10, 10, 5]} intensity={1} />
+    <div ref={globalClickRef} style={{ width: '100vw', height: canvasHeight }}>
+      <Canvas
+        camera={{ position: cameraPosition, fov: cameraFov }}
+        style={{ width: '100%', height: '100%' }}
+        dpr={[1, 2]}
+      >
+        <ambientLight intensity={0.7} />
+        <directionalLight position={[10, 10, 5]} intensity={1} />
 
-      {items.map((item, i) => (
-        <SkillPrimitive
-          key={item.label}
-          position={positions[i]}
-          label={item.label}
-          techs={item.techs}
-          delay={i * 0.1}
-          isDatabase={item.isDatabase}
-        />
-      ))}
-    </Canvas>
+        {items.map((item, i) => (
+          <SkillPrimitive
+            key={item.label}
+            position={positions[i]}
+            label={item.label}
+            techs={item.techs}
+            delay={i * 0.1}
+            isDatabase={item.isDatabase}
+            globalClickRef={globalClickRef}
+          />
+        ))}
+      </Canvas>
+    </div>
   );
 }
