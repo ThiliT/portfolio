@@ -7,6 +7,13 @@ function SkillPrimitive({ position, label, techs, delay = 0 }) {
   const [hovered, setHovered] = useState(false);
   const badges = useMemo(() => techs, [techs]);
 
+  // Mobile tap toggle
+  const handleTap = () => {
+    if (window.innerWidth < 1024) {
+      setHovered((prev) => !prev);
+    }
+  };
+
   useFrame(() => {
     if (!ref.current) return;
     ref.current.rotation.y += 0.01;
@@ -23,6 +30,7 @@ function SkillPrimitive({ position, label, techs, delay = 0 }) {
           ref={ref}
           onPointerOver={() => setHovered(true)}
           onPointerOut={() => setHovered(false)}
+          onClick={handleTap}   // mobile support
         >
           <octahedronGeometry args={[1, 0]} />
           <meshStandardMaterial
@@ -44,70 +52,81 @@ function SkillPrimitive({ position, label, techs, delay = 0 }) {
 
         {hovered && (
           <Html
-          position={[0, 7, 0]}
-          style={{
-            pointerEvents: 'none',
-            opacity: hovered ? 1 : 0,
-            transition: 'opacity 0.25s ease'
-          }}
-          transform
-        >
-          <div
+            position={[0, 7, 0]}
+            transform
             style={{
-              minWidth: '640px',
-              maxWidth: '720px',
-              padding: '48px',       
-              borderRadius: '32px',  
-              background: 'rgba(3, 7, 18, 0.97)',
-              border: '3px solid rgba(148, 163, 184, 0.6)',
-              boxShadow: '0 50px 120px rgba(0, 0, 0, 0.85)',
-              backdropFilter: 'blur(22px)',
-              animation: `fadeIn 0.45s ${delay}s ease both`,
-              transform: 'scale(1.85)', 
+              pointerEvents: 'none',
+              opacity: hovered ? 1 : 0,
+              transition: 'opacity 0.25s ease'
             }}
           >
-            <p
-              style={{
-                fontSize: '1.8rem',   
-                color: '#60a5fa',
-                marginBottom: '1.5rem',
-                letterSpacing: '0.07em',
-                fontWeight: 800,
-                textAlign: 'center',
-              }}
-            >
-              Tech Stack
-            </p>
-
             <div
               style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '0.5rem',
-                justifyContent: 'center',
+                // 🔥 Responsive popup width
+                width: window.innerWidth < 768 ? '90vw' : '640px',
+                maxWidth: window.innerWidth < 768 ? '90vw' : '720px',
+
+                // 🔥 Responsive padding & radius
+                padding: window.innerWidth < 768 ? '24px' : '48px',
+                borderRadius: window.innerWidth < 768 ? '20px' : '32px',
+
+                background: 'rgba(3, 7, 18, 0.97)',
+                border: '3px solid rgba(148, 163, 184, 0.6)',
+                boxShadow: '0 50px 120px rgba(0, 0, 0, 0.85)',
+                backdropFilter: 'blur(22px)',
+                animation: `fadeIn 0.45s ${delay}s ease both`,
+
+                // 🔥 Auto-center on mobile
+                position: window.innerWidth < 768 ? 'relative' : 'static',
+                left: window.innerWidth < 768 ? '50%' : '0',
+                transform:
+                  window.innerWidth < 768
+                    ? 'translateX(-50%) scale(1.2)'
+                    : 'scale(1.85)',
               }}
             >
-              {badges.map((tech) => (
-                <span
-                  key={tech}
-                  style={{
-                    fontSize: '1.25rem',        
-                    padding: '0.75rem 1.4rem',   
-                    borderRadius: '999px',
-                    background: 'rgba(59, 130, 246, 0.25)',
-                    border: '2px solid rgba(96, 165, 250, 0.75)',
-                    color: '#f1f5f9',
-                    letterSpacing: '0.04em',
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {tech}
-                </span>
-              ))}
+              <p
+                style={{
+                  fontSize: '1.8rem',
+                  color: '#60a5fa',
+                  marginBottom: '1.5rem',
+                  letterSpacing: '0.07em',
+                  fontWeight: 800,
+                  textAlign: 'center',
+                }}
+              >
+                Tech Stack
+              </p>
+
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
+                  justifyContent: 'center',
+                }}
+              >
+                {badges.map((tech) => (
+                  <span
+                    key={tech}
+                    style={{
+                      fontSize: '1.25rem',
+                      padding: '0.75rem 1.4rem',
+                      borderRadius: '999px',
+                      background: 'rgba(59, 130, 246, 0.25)',
+                      border: '2px solid rgba(96, 165, 250, 0.75)',
+                      color: '#f1f5f9',
+                      letterSpacing: '0.04em',
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {tech}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        </Html>
+          </Html>
         )}
       </Float>
     </group>
