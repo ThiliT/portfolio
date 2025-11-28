@@ -148,12 +148,11 @@ export default function SkillsScene() {
 
   const isMobile = window.innerWidth < 768;
 
-  // Canvas container with top/bottom padding for mobile
   const containerStyle = {
     width: '100vw',
     height: isMobile ? '120vh' : '60vh',
-    paddingTop: isMobile ? '40px' : '0px',  // less top padding
-    paddingBottom: isMobile ? '120px' : '0px', // more bottom padding
+    paddingTop: isMobile ? '20px' : '0px',
+    paddingBottom: isMobile ? '160px' : '0px',
     boxSizing: 'border-box',
   };
 
