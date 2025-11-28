@@ -30,7 +30,7 @@ function SkillPrimitive({ position, label, techs, delay = 0 }) {
           ref={ref}
           onPointerOver={() => setHovered(true)}
           onPointerOut={() => setHovered(false)}
-          onClick={handleTap}   // mobile support
+          onClick={handleTap}
         >
           <octahedronGeometry args={[1, 0]} />
           <meshStandardMaterial
@@ -62,21 +62,15 @@ function SkillPrimitive({ position, label, techs, delay = 0 }) {
           >
             <div
               style={{
-                // 🔥 Responsive popup width
                 width: window.innerWidth < 768 ? '90vw' : '640px',
                 maxWidth: window.innerWidth < 768 ? '90vw' : '720px',
-
-                // 🔥 Responsive padding & radius
                 padding: window.innerWidth < 768 ? '24px' : '48px',
                 borderRadius: window.innerWidth < 768 ? '20px' : '32px',
-
                 background: 'rgba(3, 7, 18, 0.97)',
                 border: '3px solid rgba(148, 163, 184, 0.6)',
                 boxShadow: '0 50px 120px rgba(0, 0, 0, 0.85)',
                 backdropFilter: 'blur(22px)',
                 animation: `fadeIn 0.45s ${delay}s ease both`,
-
-                // 🔥 Auto-center on mobile
                 position: window.innerWidth < 768 ? 'relative' : 'static',
                 left: window.innerWidth < 768 ? '50%' : '0',
                 transform:
@@ -156,10 +150,15 @@ export default function SkillsScene() {
     0
   ]);
 
+  // Responsive canvas height & camera
+  const canvasHeight = window.innerWidth < 768 ? '80vh' : '60vh';
+  const cameraPosition = window.innerWidth < 768 ? [0, 0, 40] : [0, 0, 30];
+  const cameraFov = window.innerWidth < 768 ? 50 : 40;
+
   return (
     <Canvas
-      camera={{ position: [0, 0, 30], fov: 40 }}
-      style={{ width: '100vw', height: '60vh' }}
+      camera={{ position: cameraPosition, fov: cameraFov }}
+      style={{ width: '100vw', height: canvasHeight }}
       dpr={[1, 2]}
     >
       <ambientLight intensity={0.7} />
