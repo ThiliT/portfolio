@@ -1,8 +1,8 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Text, Html } from '@react-three/drei';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 
-function SkillPrimitive({ position, label, techs, delay = 0 }) {
+function SkillPrimitive({ position, label, techs, delay = 0, isDatabase }) {
   const ref = useRef();
   const [hovered, setHovered] = useState(false);
   const badges = useMemo(() => techs, [techs]);
@@ -10,13 +10,33 @@ function SkillPrimitive({ position, label, techs, delay = 0 }) {
   // Mobile tap toggle
   const handleTap = () => {
     if (window.innerWidth < 1024) {
-      setHovered((prev) => !prev);
+      setHovered(true); // always open on tap
     }
   };
 
+  // Close popup when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (window.innerWidth >= 1024) return; // only mobile
+      if (!ref.current) return;
+      // Close popup if click is outside mesh
+      if (!ref.current.parent?.parent?.contains(e.target)) {
+        setHovered(false);
+      }
+    };
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, []);
+
   // Adjust shape and popup for mobile
   const shapeY = window.innerWidth < 768 ? -2 : 0;
-  const popupY = window.innerWidth < 768 ? 6 : 7;
+  let popupY = window.innerWidth < 768 ? 6 : 7;
+  let popupX = 0;
+
+  // Move database popup slightly left on mobile
+  if (window.innerWidth < 768 && isDatabase) {
+    popupX = -3; // shift left
+  }
 
   useFrame(() => {
     if (!ref.current) return;
@@ -32,8 +52,8 @@ function SkillPrimitive({ position, label, techs, delay = 0 }) {
       <Float speed={2} rotationIntensity={0.5}>
         <mesh
           ref={ref}
-          onPointerOver={() => setHovered(true)}
-          onPointerOut={() => setHovered(false)}
+          onPointerOver={() => window.innerWidth >= 1024 && setHovered(true)}
+          onPointerOut={() => window.innerWidth >= 1024 && setHovered(false)}
           onClick={handleTap}
         >
           <octahedronGeometry args={[1, 0]} />
@@ -56,12 +76,12 @@ function SkillPrimitive({ position, label, techs, delay = 0 }) {
 
         {hovered && (
           <Html
-            position={[0, popupY, 0]}
+            position={[popupX, popupY, 0]}
             transform
             style={{
               pointerEvents: 'none',
               opacity: hovered ? 1 : 0,
-              transition: 'opacity 0.25s ease'
+              transition: 'opacity 0.25s ease',
             }}
           >
             <div
@@ -136,25 +156,27 @@ export default function SkillsScene() {
     {
       label: 'Programming Languages',
       techs: ['JavaScript', 'TypeScript', 'Python', 'Java', 'C / C++', 'SQL', 'Dart'],
+      isDatabase: false,
     },
     {
       label: 'Frameworks',
       techs: ['React', 'Next.js', 'HTML / CSS', 'Tailwind CSS', 'Node.js', 'Django', 'Spring Boot'],
+      isDatabase: false,
     },
     {
       label: 'Databases & Tools',
       techs: ['MySQL', 'PostgreSQL', 'Kaggle', 'GitHub', 'Docker', 'Postman', 'VS Code', 'Figma', 'Jira'],
-    }
+      isDatabase: true, // special shift on mobile
+    },
   ];
 
   const gap = 10;
   const positions = items.map((_, i) => [
     i * gap - ((items.length - 1) * gap) / 2,
     0,
-    0
+    0,
   ]);
 
-  // Responsive canvas height & camera
   const canvasHeight = window.innerWidth < 768 ? '100vh' : '60vh';
   const cameraPosition = window.innerWidth < 768 ? [0, 0, 45] : [0, 0, 30];
   const cameraFov = window.innerWidth < 768 ? 55 : 40;
@@ -175,6 +197,7 @@ export default function SkillsScene() {
           label={item.label}
           techs={item.techs}
           delay={i * 0.1}
+          isDatabase={item.isDatabase}
         />
       ))}
     </Canvas>
