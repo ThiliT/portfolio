@@ -10,7 +10,6 @@ function SkillPrimitive({ position, label, techs, delay = 0, popupX }) {
   const isMobile = window.innerWidth < 1024;
   const visible = isMobile || hovered;
 
-  // Adjust shape and popup for mobile
   const shapeY = isMobile ? -2 : 0;
   const popupY = isMobile ? 6 : 7;
 
@@ -119,7 +118,6 @@ function SkillPrimitive({ position, label, techs, delay = 0, popupX }) {
 }
 
 export default function SkillsScene() {
-  // Define popup X offsets for mobile to shift left
   const mobilePopupOffsets = {
     0: -4, // Programming Languages
     1: -2, // Frameworks
@@ -148,31 +146,41 @@ export default function SkillsScene() {
     0,
   ]);
 
-  // Adjust camera and canvas height for mobile so everything is visible
   const isMobile = window.innerWidth < 768;
-  const canvasHeight = isMobile ? '120vh' : '60vh';
+
+  // Canvas container with top/bottom padding for mobile
+  const containerStyle = {
+    width: '100vw',
+    height: isMobile ? '120vh' : '60vh',
+    paddingTop: isMobile ? '40px' : '0px',  // less top padding
+    paddingBottom: isMobile ? '120px' : '0px', // more bottom padding
+    boxSizing: 'border-box',
+  };
+
   const cameraPosition = isMobile ? [0, 0, 50] : [0, 0, 30];
   const cameraFov = isMobile ? 60 : 40;
 
   return (
-    <Canvas
-      camera={{ position: cameraPosition, fov: cameraFov }}
-      style={{ width: '100vw', height: canvasHeight }}
-      dpr={[1,2]}
-    >
-      <ambientLight intensity={0.7} />
-      <directionalLight position={[10,10,5]} intensity={1} />
+    <div style={containerStyle}>
+      <Canvas
+        camera={{ position: cameraPosition, fov: cameraFov }}
+        style={{ width: '100%', height: '100%' }}
+        dpr={[1,2]}
+      >
+        <ambientLight intensity={0.7} />
+        <directionalLight position={[10,10,5]} intensity={1} />
 
-      {items.map((item, i) => (
-        <SkillPrimitive
-          key={item.label}
-          position={positions[i]}
-          label={item.label}
-          techs={item.techs}
-          delay={i*0.1}
-          popupX={isMobile ? mobilePopupOffsets[i] : 0}
-        />
-      ))}
-    </Canvas>
+        {items.map((item, i) => (
+          <SkillPrimitive
+            key={item.label}
+            position={positions[i]}
+            label={item.label}
+            techs={item.techs}
+            delay={i*0.1}
+            popupX={isMobile ? mobilePopupOffsets[i] : 0}
+          />
+        ))}
+      </Canvas>
+    </div>
   );
 }
