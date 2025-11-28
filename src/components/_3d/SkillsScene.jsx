@@ -2,27 +2,17 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Text, Html } from '@react-three/drei';
 import { useMemo, useRef, useState } from 'react';
 
-function SkillPrimitive({ position, label, techs, delay = 0, isDatabase }) {
+function SkillPrimitive({ position, label, techs, delay = 0, popupX }) {
   const ref = useRef();
   const [hovered, setHovered] = useState(false);
   const badges = useMemo(() => techs, [techs]);
 
   const isMobile = window.innerWidth < 1024;
-
-  // Always show popup on mobile
   const visible = isMobile || hovered;
 
   // Adjust shape and popup for mobile
   const shapeY = isMobile ? -2 : 0;
   const popupY = isMobile ? 6 : 7;
-
-  // Shift popup on mobile
-  let popupX = 0;
-  if (isMobile) {
-    if (isDatabase) popupX = -6; // Databases & Tools shifted left
-    else if (label === 'Programming Languages') popupX = 3; // shift right
-    else if (label === 'Frameworks') popupX = 1.5; // shift slightly right
-  }
 
   useFrame(() => {
     if (!ref.current) return;
@@ -62,10 +52,7 @@ function SkillPrimitive({ position, label, techs, delay = 0, isDatabase }) {
           <Html
             position={[popupX, popupY, 0]}
             transform
-            style={{
-              pointerEvents: 'none',
-              opacity: 1,
-            }}
+            style={{ pointerEvents: 'none', opacity: 1 }}
           >
             <div
               style={{
@@ -132,43 +119,49 @@ function SkillPrimitive({ position, label, techs, delay = 0, isDatabase }) {
 }
 
 export default function SkillsScene() {
+  // Define popup X offsets for mobile to shift left
+  const mobilePopupOffsets = {
+    0: -4, // Programming Languages
+    1: -2, // Frameworks
+    2: -6, // Databases & Tools
+  };
+
   const items = [
     {
       label: 'Programming Languages',
-      techs: ['JavaScript', 'TypeScript', 'Python', 'Java', 'C / C++', 'SQL', 'Dart'],
-      isDatabase: false,
+      techs: ['JavaScript','TypeScript','Python','Java','C / C++','SQL','Dart'],
     },
     {
       label: 'Frameworks',
-      techs: ['React', 'Next.js', 'HTML / CSS', 'Tailwind CSS', 'Node.js', 'Django', 'Spring Boot'],
-      isDatabase: false,
+      techs: ['React','Next.js','HTML / CSS','Tailwind CSS','Node.js','Django','Spring Boot'],
     },
     {
       label: 'Databases & Tools',
-      techs: ['MySQL', 'PostgreSQL', 'Kaggle', 'GitHub', 'Docker', 'Postman', 'VS Code', 'Figma', 'Jira'],
-      isDatabase: true,
+      techs: ['MySQL','PostgreSQL','Kaggle','GitHub','Docker','Postman','VS Code','Figma','Jira'],
     },
   ];
 
-  const gap = 14; // increase gap so all shapes + popups fit
+  const gap = 10;
   const positions = items.map((_, i) => [
     i * gap - ((items.length - 1) * gap) / 2,
     0,
     0,
   ]);
 
-  const canvasHeight = window.innerWidth < 768 ? '120vh' : '60vh'; // increase height to show everything
-  const cameraPosition = window.innerWidth < 768 ? [0, 0, 50] : [0, 0, 30]; // move camera back for mobile
-  const cameraFov = window.innerWidth < 768 ? 60 : 40;
+  // Adjust camera and canvas height for mobile so everything is visible
+  const isMobile = window.innerWidth < 768;
+  const canvasHeight = isMobile ? '120vh' : '60vh';
+  const cameraPosition = isMobile ? [0, 0, 50] : [0, 0, 30];
+  const cameraFov = isMobile ? 60 : 40;
 
   return (
     <Canvas
       camera={{ position: cameraPosition, fov: cameraFov }}
       style={{ width: '100vw', height: canvasHeight }}
-      dpr={[1, 2]}
+      dpr={[1,2]}
     >
       <ambientLight intensity={0.7} />
-      <directionalLight position={[10, 10, 5]} intensity={1} />
+      <directionalLight position={[10,10,5]} intensity={1} />
 
       {items.map((item, i) => (
         <SkillPrimitive
@@ -176,8 +169,8 @@ export default function SkillsScene() {
           position={positions[i]}
           label={item.label}
           techs={item.techs}
-          delay={i * 0.1}
-          isDatabase={item.isDatabase}
+          delay={i*0.1}
+          popupX={isMobile ? mobilePopupOffsets[i] : 0}
         />
       ))}
     </Canvas>
