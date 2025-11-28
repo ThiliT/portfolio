@@ -14,8 +14,9 @@ function SkillPrimitive({ position, label, techs, delay = 0 }) {
     }
   };
 
-  // Popup height offset
-  const popupY = window.innerWidth < 768 ? 4 : 7;
+  // Adjust shape and popup for mobile
+  const shapeY = window.innerWidth < 768 ? -2 : 0;
+  const popupY = window.innerWidth < 768 ? 6 : 7;
 
   useFrame(() => {
     if (!ref.current) return;
@@ -27,7 +28,7 @@ function SkillPrimitive({ position, label, techs, delay = 0 }) {
   });
 
   return (
-    <group position={position}>
+    <group position={[position[0], position[1] + shapeY, position[2]]}>
       <Float speed={2} rotationIntensity={0.5}>
         <mesh
           ref={ref}
@@ -154,9 +155,9 @@ export default function SkillsScene() {
   ]);
 
   // Responsive canvas height & camera
-  const canvasHeight = window.innerWidth < 768 ? '90vh' : '60vh';
-  const cameraPosition = window.innerWidth < 768 ? [0, 0, 40] : [0, 0, 30];
-  const cameraFov = window.innerWidth < 768 ? 50 : 40;
+  const canvasHeight = window.innerWidth < 768 ? '100vh' : '60vh';
+  const cameraPosition = window.innerWidth < 768 ? [0, 0, 45] : [0, 0, 30];
+  const cameraFov = window.innerWidth < 768 ? 55 : 40;
 
   return (
     <Canvas
