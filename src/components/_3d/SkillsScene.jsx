@@ -2,51 +2,33 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Text, Html } from '@react-three/drei';
 import { useMemo, useRef, useState, useEffect } from 'react';
 
-function SkillPrimitive({ position, label, techs, delay = 0, isDatabase, globalClickRef }) {
+function SkillPrimitive({ position, label, techs, delay = 0, isDatabase, setActiveId, id, activeId }) {
   const ref = useRef();
   const [hovered, setHovered] = useState(false);
   const badges = useMemo(() => techs, [techs]);
 
-  // Mobile tap toggle
-  const handleTap = (e) => {
-    e.stopPropagation(); // stop click from reaching global overlay
-    if (window.innerWidth < 1024) {
-      setHovered(true); // open popup
-    }
-  };
+  // Determine if this popup should be visible
+  const visible = activeId === id || (hovered && window.innerWidth >= 1024);
 
   // Adjust shape and popup for mobile
   const shapeY = window.innerWidth < 768 ? -2 : 0;
   const popupY = window.innerWidth < 768 ? 6 : 7;
-
-  // Shift database popup more left
-  let popupX = 0;
-  if (window.innerWidth < 768 && isDatabase) {
-    popupX = -6; // more left
-  }
+  const popupX = window.innerWidth < 768 && isDatabase ? -6 : 0; // move database popup more left
 
   useFrame(() => {
     if (!ref.current) return;
     ref.current.rotation.y += 0.01;
-    const targetScale = hovered ? 2.5 : 1.5;
-    const currentScale =
-      ref.current.scale.x + (targetScale - ref.current.scale.x) * 0.1;
+    const targetScale = visible ? 2.5 : 1.5;
+    const currentScale = ref.current.scale.x + (targetScale - ref.current.scale.x) * 0.1;
     ref.current.scale.set(currentScale, currentScale, currentScale);
   });
 
-  // Close popup on any global click
-  useEffect(() => {
-    const handleGlobalClick = () => {
-      if (window.innerWidth < 1024) {
-        setHovered(false);
-      }
-    };
-    const overlay = globalClickRef.current;
-    if (overlay) overlay.addEventListener('click', handleGlobalClick);
-    return () => {
-      if (overlay) overlay.removeEventListener('click', handleGlobalClick);
-    };
-  }, [globalClickRef]);
+  const handleClick = (e) => {
+    e.stopPropagation();
+    if (window.innerWidth < 1024) {
+      setActiveId(activeId === id ? null : id);
+    }
+  };
 
   return (
     <group position={[position[0], position[1] + shapeY, position[2]]}>
@@ -55,11 +37,11 @@ function SkillPrimitive({ position, label, techs, delay = 0, isDatabase, globalC
           ref={ref}
           onPointerOver={() => window.innerWidth >= 1024 && setHovered(true)}
           onPointerOut={() => window.innerWidth >= 1024 && setHovered(false)}
-          onClick={handleTap}
+          onClick={handleClick}
         >
           <octahedronGeometry args={[1, 0]} />
           <meshStandardMaterial
-            color={hovered ? '#60a5fa' : '#94a3b8'}
+            color={visible ? '#60a5fa' : '#94a3b8'}
             metalness={0.1}
             roughness={0.4}
           />
@@ -75,14 +57,13 @@ function SkillPrimitive({ position, label, techs, delay = 0, isDatabase, globalC
           {label}
         </Text>
 
-        {hovered && (
+        {visible && (
           <Html
             position={[popupX, popupY, 0]}
             transform
             style={{
               pointerEvents: 'none',
-              opacity: hovered ? 1 : 0,
-              transition: 'opacity 0.25s ease',
+              opacity: 1,
             }}
           >
             <div
@@ -99,9 +80,7 @@ function SkillPrimitive({ position, label, techs, delay = 0, isDatabase, globalC
                 position: window.innerWidth < 768 ? 'relative' : 'static',
                 left: window.innerWidth < 768 ? '50%' : '0',
                 transform:
-                  window.innerWidth < 768
-                    ? 'translateX(-50%) scale(1.0)'
-                    : 'scale(1.85)',
+                  window.innerWidth < 768 ? 'translateX(-50%) scale(1.0)' : 'scale(1.85)',
               }}
             >
               <p
@@ -153,59 +132,54 @@ function SkillPrimitive({ position, label, techs, delay = 0, isDatabase, globalC
 }
 
 export default function SkillsScene() {
-  const globalClickRef = useRef();
+  const [activeId, setActiveId] = useState(null);
+
+  // Close popup when tapping anywhere outside
+  useEffect(() => {
+    const handleWindowClick = () => {
+      if (window.innerWidth < 1024) {
+        setActiveId(null);
+      }
+    };
+    window.addEventListener('click', handleWindowClick);
+    return () => window.removeEventListener('click', handleWindowClick);
+  }, []);
 
   const items = [
-    {
-      label: 'Programming Languages',
-      techs: ['JavaScript', 'TypeScript', 'Python', 'Java', 'C / C++', 'SQL', 'Dart'],
-      isDatabase: false,
-    },
-    {
-      label: 'Frameworks',
-      techs: ['React', 'Next.js', 'HTML / CSS', 'Tailwind CSS', 'Node.js', 'Django', 'Spring Boot'],
-      isDatabase: false,
-    },
-    {
-      label: 'Databases & Tools',
-      techs: ['MySQL', 'PostgreSQL', 'Kaggle', 'GitHub', 'Docker', 'Postman', 'VS Code', 'Figma', 'Jira'],
-      isDatabase: true,
-    },
+    { label: 'Programming Languages', techs: ['JavaScript','TypeScript','Python','Java','C / C++','SQL','Dart'], isDatabase: false },
+    { label: 'Frameworks', techs: ['React','Next.js','HTML / CSS','Tailwind CSS','Node.js','Django','Spring Boot'], isDatabase: false },
+    { label: 'Databases & Tools', techs: ['MySQL','PostgreSQL','Kaggle','GitHub','Docker','Postman','VS Code','Figma','Jira'], isDatabase: true },
   ];
 
   const gap = 10;
-  const positions = items.map((_, i) => [
-    i * gap - ((items.length - 1) * gap) / 2,
-    0,
-    0,
-  ]);
+  const positions = items.map((_, i) => [i*gap - ((items.length-1)*gap)/2, 0, 0]);
 
   const canvasHeight = window.innerWidth < 768 ? '100vh' : '60vh';
-  const cameraPosition = window.innerWidth < 768 ? [0, 0, 45] : [0, 0, 30];
+  const cameraPosition = window.innerWidth < 768 ? [0,0,45] : [0,0,30];
   const cameraFov = window.innerWidth < 768 ? 55 : 40;
 
   return (
-    <div ref={globalClickRef} style={{ width: '100vw', height: canvasHeight }}>
-      <Canvas
-        camera={{ position: cameraPosition, fov: cameraFov }}
-        style={{ width: '100%', height: '100%' }}
-        dpr={[1, 2]}
-      >
-        <ambientLight intensity={0.7} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
+    <Canvas
+      camera={{position: cameraPosition, fov: cameraFov}}
+      style={{width:'100vw', height:canvasHeight}}
+      dpr={[1,2]}
+    >
+      <ambientLight intensity={0.7} />
+      <directionalLight position={[10,10,5]} intensity={1} />
 
-        {items.map((item, i) => (
-          <SkillPrimitive
-            key={item.label}
-            position={positions[i]}
-            label={item.label}
-            techs={item.techs}
-            delay={i * 0.1}
-            isDatabase={item.isDatabase}
-            globalClickRef={globalClickRef}
-          />
-        ))}
-      </Canvas>
-    </div>
+      {items.map((item, i) => (
+        <SkillPrimitive
+          key={item.label}
+          position={positions[i]}
+          label={item.label}
+          techs={item.techs}
+          delay={i*0.1}
+          isDatabase={item.isDatabase}
+          id={i}
+          activeId={activeId}
+          setActiveId={setActiveId}
+        />
+      ))}
+    </Canvas>
   );
 }
